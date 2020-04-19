@@ -8,7 +8,7 @@ function New-UbuntuWSLInstance {
       [Parameter(Mandatory=$false)]
       [string]$Name,
       [Parameter(Mandatory=$false)]
-      [string]$DistroName = 'focal',
+      [string]$ReleaseName = 'focal',
       [Parameter(Mandatory=$false)]
       [ValidateSet('1','2')]
       [string]$Version = '1',
@@ -17,7 +17,15 @@ function New-UbuntuWSLInstance {
       [boolean]$Force
     )
     Process {
+      Write-Host "# Let the journey begin!" -ForegroundColor DarkYellow
+
       $TmpName = -join ((65..90) + (97..122) | Get-Random -Count 10 | ForEach-Object {[char]$_})
+
+      $SysArchName = ($env:PROCESSOR_ARCHITECTURE).ToLower()
+      if ( -not ( ( $SysArchName -eq "amd64" ) -or ( $SysArchName -eq "arm64" ) ) ) {
+        throw [System.NotSupportedException] "The Architecture $SysArchName is not supported."
+      }
+      Write-Host "## Architecture: $SysArchName" -ForegroundColor DarkYellow
 
       if ( -not (Test-Path -Path "$env:HOME\ubuntu-wslinstance" -PathType Container ) ) {
         mkdir -Path "$env:HOME\ubuntu-wslinstance" | Out-Null
@@ -27,35 +35,39 @@ function New-UbuntuWSLInstance {
         mkdir -Path "$env:HOME\ubuntu-wslinstance\.tarball" | Out-Null
       }
 
-      if ( Test-Path -LiteralPath "$env:HOME\ubuntu-wslinstance\.tarball\$DistroName-amd64.tar.gz" -PathType Leaf ) {
+      if ( Test-Path -LiteralPath "$env:HOME\ubuntu-wslinstance\.tarball\$ReleaseName-$SysArchName.tar.gz" -PathType Leaf ) {
+          
         if ( $Force ) {
-            Write-Host "# $DistroName-amd64.tar.gz found but -Force passed. Redownloading..." -ForegroundColor DarkYellow
+            Write-Host "# WSL tarball for $ReleaseName($SysArchName) found but -Force passed. Redownloading..." -ForegroundColor DarkYellow
             $download_start_time = Get-Date
-            (New-Object System.Net.WebClient).DownloadFile("http://cloud-images.ubuntu.com/$DistroName/current/$DistroName-server-cloudimg-amd64-wsl.rootfs.tar.gz", "$env:HOME\ubuntu-wslinstance\$DistroName-amd64.tar.gz")
+            (New-Object System.Net.WebClient).DownloadFile("http://cloud-images.ubuntu.com/$ReleaseName/current/$ReleaseName-server-cloudimg-$SysArchName-wsl.rootfs.tar.gz", "$env:HOME\ubuntu-wslinstance\$ReleaseName-amd64.tar.gz")
 
-            Write-Host "# Download completed for $DistroName-amd64.tar.gz. Time taken: $((Get-Date).Subtract($download_start_time).Seconds) second(s)" -ForegroundColor DarkYellow
+            Write-Host "# Download completed for theWSL tarball for $ReleaseName($SysArchName). Time taken: $((Get-Date).Subtract($download_start_time).Seconds) second(s)" -ForegroundColor DarkYellow
         } else {
-            Write-Host "# $DistroName-amd64.tar.gz found, skip downloading" -ForegroundColor DarkYellow
+            Write-Host "# WSL tarball for $ReleaseName($SysArchName) found, skip downloading" -ForegroundColor DarkYellow
         }
-      } else {
-        Write-Host "# $DistroName-amd64.tar.gz not found. Downloading..." -ForegroundColor DarkYellow
-        $download_start_time = Get-Date
-        (New-Object System.Net.WebClient).DownloadFile("http://cloud-images.ubuntu.com/$DistroName/current/$DistroName-server-cloudimg-amd64-wsl.rootfs.tar.gz", "$env:HOME\ubuntu-wslinstance\$DistroName-amd64.tar.gz")
 
-        Write-Host "# Download completed for $DistroName-amd64.tar.gz. Time taken: $((Get-Date).Subtract($download_start_time).Seconds) second(s)" -ForegroundColor DarkYellow
+      } else {
+
+        Write-Host "# WSL tarball for $ReleaseName($SysArchName) not found. Downloading..." -ForegroundColor DarkYellow
+        $download_start_time = Get-Date
+        (New-Object System.Net.WebClient).DownloadFile("http://cloud-images.ubuntu.com/$ReleaseName/current/$ReleaseName-server-cloudimg-$SysArchName-wsl.rootfs.tar.gz", "$env:HOME\ubuntu-wslinstance\$ReleaseName-amd64.tar.gz")
+
+        Write-Host "# Download completed for theWSL tarball for $ReleaseName($SysArchName). Time taken: $((Get-Date).Subtract($download_start_time).Seconds) second(s)" -ForegroundColor DarkYellow
+        
       }
 
-      Write-Host "# Creating Instance ubuntu-$DistroName-$TmpName (Using WSL$Version)...." -ForegroundColor DarkYellow
-      wsl.exe --import ubuntu-$DistroName-$TmpName "$env:HOME\ubuntu-wslinstance\ubuntu-$DistroName-$TmpName" "$env:HOME\ubuntu-wslinstance\.tarball\$DistroName-amd64.tar.gz" --version $Version
-      Write-Host "# Updating ubuntu-$DistroName-$TmpName...." -ForegroundColor DarkYellow
-      wsl.exe -d ubuntu-$DistroName-$TmpName apt update
-      wsl.exe -d ubuntu-$DistroName-$TmpName apt upgrade -y
-      Write-Host "# Creating user '$env:USERNAME' for ubuntu-$DistroName-$TmpName...." -ForegroundColor DarkYellow
-      wsl.exe -d ubuntu-$DistroName-$TmpName /usr/sbin/useradd -m -s "/bin/bash" $env:USERNAME
-      wsl.exe -d ubuntu-$DistroName-$TmpName passwd -q -d $env:USERNAME
-      wsl.exe -d ubuntu-$DistroName-$TmpName /usr/sbin/usermod -aG adm,dialout,cdrom,floppy,sudo,audio,dip,video,plugdev,netdev $env:USERNAME
+      Write-Host "# Creating Instance ubuntu-$ReleaseName-$TmpName (Using WSL$Version)...." -ForegroundColor DarkYellow
+      wsl.exe --import ubuntu-$ReleaseName-$TmpName "$env:HOME\ubuntu-wslinstance\ubuntu-$ReleaseName-$TmpName" "$env:HOME\ubuntu-wslinstance\.tarball\$ReleaseName-amd64.tar.gz" --version $Version
+      Write-Host "# Updating ubuntu-$ReleaseName-$TmpName...." -ForegroundColor DarkYellow
+      wsl.exe -d ubuntu-$ReleaseName-$TmpName apt update
+      wsl.exe -d ubuntu-$ReleaseName-$TmpName apt upgrade -y
+      Write-Host "# Creating user '$env:USERNAME' for ubuntu-$ReleaseName-$TmpName...." -ForegroundColor DarkYellow
+      wsl.exe -d ubuntu-$ReleaseName-$TmpName /usr/sbin/useradd -m -s "/bin/bash" $env:USERNAME
+      wsl.exe -d ubuntu-$ReleaseName-$TmpName passwd -q -d $env:USERNAME
+      wsl.exe -d ubuntu-$ReleaseName-$TmpName /usr/sbin/usermod -aG adm,dialout,cdrom,floppy,sudo,audio,dip,video,plugdev,netdev $env:USERNAME
       Write-Host "# You are ready to rock!" -ForegroundColor DarkYellow
-      wsl.exe -d ubuntu-$DistroName-$TmpName -u $env:USERNAME
+      wsl.exe -d ubuntu-$ReleaseName-$TmpName -u $env:USERNAME
     }
   }
 
