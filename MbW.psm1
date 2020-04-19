@@ -1,5 +1,19 @@
 function Start-UbuntuWSLInstance {
+  Param (
+    [Parameter(Mandatory=$true)]
+    [string]$Name
+  )
+  Process {
+    wsl.exe -d ubuntu-$Name -u $env:USERNAME
+  }
+}
 
+function Show-AllUbuntuWSLInstances {
+  if ( -not ( Test-Path -LiteralPath "$env:HOME\.mbw\list.csv" -PathType Leaf ) ) {
+    Add-Content "$env:HOME\.mbw\list.csv" "ID,Release,Version"
+  }
+
+  Import-Csv "$env:HOME\.mbw\list.csv" | Format-Table
 }
 
 function New-UbuntuWSLInstance {
