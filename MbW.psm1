@@ -37,9 +37,12 @@ function New-UbuntuWSLInstance {
 
       $SysArchName = ($env:PROCESSOR_ARCHITECTURE).ToLower()
       if ( -not ( ( $SysArchName -eq "amd64" ) -or ( $SysArchName -eq "arm64" ) ) ) {
-        throw [System.NotSupportedException] "The Architecture $SysArchName is not supported."
+        throw [System.NotSupportedException] "The architecture $SysArchName is not supported."
       }
-      Write-Host "## Architecture: $SysArchName" -ForegroundColor DarkYellow
+      if ( ( $ReleaseName -eq "xenial" ) -and ( $SysArchName -eq "arm64" ) ) {
+        throw [System.NotSupportedException] "Ubuntu Xenial do not support architecture arm64."
+      }
+      Write-Host "# Your system architecture is $SysArchName" -ForegroundColor DarkYellow
 
       if ( -not (Test-Path -Path "$env:HOME\.mbw" -PathType Container ) ) {
         mkdir -Path "$env:HOME\.mbw" | Out-Null
