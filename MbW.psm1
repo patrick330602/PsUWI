@@ -22,13 +22,23 @@ function New-UbuntuWSLInstance {
       [Parameter(Mandatory=$false)]
       [string]$Name,
       [Parameter(Mandatory=$false)]
+      [Alias("Release")]
       [string]$ReleaseName = 'focal',
       [Parameter(Mandatory=$false)]
       [ValidateSet('1','2')]
       [string]$Version = '1',
       [Parameter(Mandatory=$false)]
+      [Alias("Force")]
       [Switch]
-      [boolean]$Force
+      [boolean]$IsForce,
+      [Parameter(Mandatory=$false)]
+      [Alias("NoUpdate")]
+      [Switch]
+      [boolean]$IsNoUpdate,
+      [Parameter(Mandatory=$false)]
+      [Alias("Root")]
+      [Switch]
+      [boolean]$IsRoot
     )
     Process {
       Write-Host "# Let the journey begin!" -ForegroundColor DarkYellow
@@ -54,7 +64,7 @@ function New-UbuntuWSLInstance {
 
       if ( Test-Path -LiteralPath "$env:HOME\.mbw\.tarball\$ReleaseName-$SysArchName.tar.gz" -PathType Leaf ) {
 
-        if ( $Force ) {
+        if ( $IsForce ) {
             Write-Host "# WSL tarball for $ReleaseName($SysArchName) found but -Force passed. Redownloading..." -ForegroundColor DarkYellow
             $download_start_time = Get-Date
             (New-Object System.Net.WebClient).DownloadFile("http://cloud-images.ubuntu.com/$ReleaseName/current/$ReleaseName-server-cloudimg-$SysArchName-wsl.rootfs.tar.gz", "$env:HOME\.mbw\.tarball\$ReleaseName-amd64.tar.gz")
@@ -93,13 +103,20 @@ function New-UbuntuWSLInstance {
 
       Write-Host "# Creating Instance ubuntu-$TmpName (Using Ubuntu $ReleaseName and WSL$Version)...." -ForegroundColor DarkYellow
       wsl.exe --import ubuntu-$TmpName "$env:HOME\.mbw\ubuntu-$TmpName" "$env:HOME\.mbw\.tarball\$ReleaseName-amd64.tar.gz" --version $Version
-      Write-Host "# Updating ubuntu-$TmpName...." -ForegroundColor DarkYellow
-      wsl.exe -d ubuntu-$TmpName apt update
-      wsl.exe -d ubuntu-$TmpName apt upgrade -y
-      Write-Host "# Creating user '$env:USERNAME' for ubuntu-$TmpName...." -ForegroundColor DarkYellow
-      wsl.exe -d ubuntu-$TmpName /usr/sbin/useradd -m -s "/bin/bash" $env:USERNAME
-      wsl.exe -d ubuntu-$TmpName passwd -q -d $env:USERNAME
-      wsl.exe -d ubuntu-$TmpName /usr/sbin/usermod -aG adm,dialout,cdrom,floppy,sudo,audio,dip,video,plugdev,netdev $env:USERNAME
+
+      if ( -not $IsNoUpdate ) {
+        Write-Host "# Updating ubuntu-$TmpName...." -ForegroundColor DarkYellow
+        wsl.exe -d ubuntu-$TmpName apt update
+        wsl.exe -d ubuntu-$TmpName apt upgrade -y
+      }
+
+      if ( -not $IsRoot ) {
+        Write-Host "# Creating user '$env:USERNAME' for ubuntu-$TmpName...." -ForegroundColor DarkYellow
+        wsl.exe -d ubuntu-$TmpName /usr/sbin/useradd -m -s "/bin/bash" $env:USERNAME
+        wsl.exe -d ubuntu-$TmpName passwd -q -d $env:USERNAME
+        wsl.exe -d ubuntu-$TmpName /usr/sbin/usermod -aG adm,dialout,cdrom,floppy,sudo,audio,dip,video,plugdev,netdev $env:USERNAME
+      }
+
       Write-Host "# You are ready to rock!" -ForegroundColor DarkYellow
       wsl.exe -d ubuntu-$TmpName -u $env:USERNAME
     }
