@@ -1,4 +1,34 @@
 function New-UbuntuWSLInstance {
+    <#
+    .SYNOPSIS
+        Create an new Ubuntu instance on WSL
+    .DESCRIPTION
+        Create an new Ubuntu instance on WSL. Windows 10 2004 only for now.
+    .PARAMETER Release
+        The Ubuntu relase you want to use to create the instance. Default is focal.
+    .PARAMETER Version
+        The WSL version you want to use. Default is 1.
+    .PARAMETER Force
+        If specified, an new WSL tarball will always be downloaded even if it exists.
+    .PARAMETER NoUpdate
+        If specified, it will not update during the creation.
+    .PARAMETER RootOnly
+        If specified, no new user will be created.
+    .EXAMPLE
+        New-UbuntuWSLInstance -Release bionic
+        # Create a Ubuntu Bionic instance on WSL1
+    .EXAMPLE
+        New-UbuntuWSLInstance -Release xenial -Version 2 -RootOnly
+        # Create a Ubuntu Xenial instance on WSL2 without creating a user account
+    .EXAMPLE
+        New-UbuntuWSLInstance -Version 2 -NoUpdate
+        # Create a Ubuntu Focal instance on WSL2 witout any update
+    .EXAMPLE
+        New-UbuntuWSLInstance -Release eoan -Force
+        # Create a Ubuntu Eoan instance on WSL1 and download the WSL tarball even it already exists
+    .LINK
+        https://github.com/patrick330602/PsUWI
+    #>
     [cmdletbinding()]
     Param (
       [Parameter(Mandatory=$false)]
@@ -48,12 +78,12 @@ function New-UbuntuWSLInstance {
 
             Write-Host "# Download completed for theWSL tarball for $Release($SysArchName). Time taken: $((Get-Date).Subtract($download_start_time).Seconds) second(s)" -ForegroundColor DarkYellow
         } else {
-            Write-Host "# WSL tarball for $Release($SysArchName) found, skip downloading" -ForegroundColor DarkYellow
+            Write-Host "# WSL tarball for $Release ($SysArchName) found, skip downloading" -ForegroundColor DarkYellow
         }
 
       } else {
 
-        Write-Host "# WSL tarball for $Release($SysArchName) not found. Downloading..." -ForegroundColor DarkYellow
+        Write-Host "# WSL tarball for $Release ($SysArchName) not found. Downloading..." -ForegroundColor DarkYellow
         $download_start_time = Get-Date
         (New-Object System.Net.WebClient).DownloadFile("http://cloud-images.ubuntu.com/$Release/current/$Release-server-cloudimg-$SysArchName-wsl.rootfs.tar.gz", "$env:HOME\.mbw\.tarball\$Release-amd64.tar.gz")
 
