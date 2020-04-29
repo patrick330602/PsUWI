@@ -1,44 +1,21 @@
-function Start-UbuntuWSLInstance {
-  Param (
-    [Parameter(Mandatory=$true)]
-    [string]$Name
-  )
-  Process {
-    wsl.exe -d ubuntu-$Name -u $env:USERNAME
-  }
-}
-
-function Show-AllUbuntuWSLInstances {
-  if ( -not ( Test-Path -LiteralPath "$env:HOME\.mbw\list.csv" -PathType Leaf ) ) {
-    Add-Content "$env:HOME\.mbw\list.csv" "ID,Release,Version"
-  }
-
-  Import-Csv "$env:HOME\.mbw\list.csv" | Format-Table
-}
-
 function New-UbuntuWSLInstance {
     [cmdletbinding()]
     Param (
       [Parameter(Mandatory=$false)]
-      [string]$Name,
-      [Parameter(Mandatory=$false)]
-      [Alias("Release")]
-      [string]$ReleaseName = 'focal',
+      [string]$Release = 'focal',
       [Parameter(Mandatory=$false)]
       [ValidateSet('1','2')]
       [string]$Version = '1',
       [Parameter(Mandatory=$false)]
-      [Alias("Force")]
       [Switch]
-      [boolean]$IsForce,
+      [boolean]$Force,
       [Parameter(Mandatory=$false)]
-      [Alias("NoUpdate")]
       [Switch]
-      [boolean]$IsNoUpdate,
+      [boolean]$NoUpdate,
       [Parameter(Mandatory=$false)]
       [Alias("Root")]
       [Switch]
-      [boolean]$IsRoot
+      [boolean]$RootOnly
     )
     Process {
       Write-Host "# Let the journey begin!" -ForegroundColor DarkYellow
@@ -49,7 +26,7 @@ function New-UbuntuWSLInstance {
       if ( -not ( ( $SysArchName -eq "amd64" ) -or ( $SysArchName -eq "arm64" ) ) ) {
         throw [System.NotSupportedException] "The architecture $SysArchName is not supported."
       }
-      if ( ( $ReleaseName -eq "xenial" ) -and ( $SysArchName -eq "arm64" ) ) {
+      if ( ( $Release -eq "xenial" ) -and ( $SysArchName -eq "arm64" ) ) {
         throw [System.NotSupportedException] "Ubuntu Xenial do not support architecture arm64."
       }
       Write-Host "# Your system architecture is $SysArchName" -ForegroundColor DarkYellow
@@ -62,25 +39,25 @@ function New-UbuntuWSLInstance {
         mkdir -Path "$env:HOME\.mbw\.tarball" | Out-Null
       }
 
-      if ( Test-Path -LiteralPath "$env:HOME\.mbw\.tarball\$ReleaseName-$SysArchName.tar.gz" -PathType Leaf ) {
+      if ( Test-Path -LiteralPath "$env:HOME\.mbw\.tarball\$Release-$SysArchName.tar.gz" -PathType Leaf ) {
 
-        if ( $IsForce ) {
-            Write-Host "# WSL tarball for $ReleaseName($SysArchName) found but -Force passed. Redownloading..." -ForegroundColor DarkYellow
+        if ( $Force ) {
+            Write-Host "# WSL tarball for $Release($SysArchName) found but -Force passed. Redownloading..." -ForegroundColor DarkYellow
             $download_start_time = Get-Date
-            (New-Object System.Net.WebClient).DownloadFile("http://cloud-images.ubuntu.com/$ReleaseName/current/$ReleaseName-server-cloudimg-$SysArchName-wsl.rootfs.tar.gz", "$env:HOME\.mbw\.tarball\$ReleaseName-amd64.tar.gz")
+            (New-Object System.Net.WebClient).DownloadFile("http://cloud-images.ubuntu.com/$Release/current/$Release-server-cloudimg-$SysArchName-wsl.rootfs.tar.gz", "$env:HOME\.mbw\.tarball\$Release-amd64.tar.gz")
 
-            Write-Host "# Download completed for theWSL tarball for $ReleaseName($SysArchName). Time taken: $((Get-Date).Subtract($download_start_time).Seconds) second(s)" -ForegroundColor DarkYellow
+            Write-Host "# Download completed for theWSL tarball for $Release($SysArchName). Time taken: $((Get-Date).Subtract($download_start_time).Seconds) second(s)" -ForegroundColor DarkYellow
         } else {
-            Write-Host "# WSL tarball for $ReleaseName($SysArchName) found, skip downloading" -ForegroundColor DarkYellow
+            Write-Host "# WSL tarball for $Release($SysArchName) found, skip downloading" -ForegroundColor DarkYellow
         }
 
       } else {
 
-        Write-Host "# WSL tarball for $ReleaseName($SysArchName) not found. Downloading..." -ForegroundColor DarkYellow
+        Write-Host "# WSL tarball for $Release($SysArchName) not found. Downloading..." -ForegroundColor DarkYellow
         $download_start_time = Get-Date
-        (New-Object System.Net.WebClient).DownloadFile("http://cloud-images.ubuntu.com/$ReleaseName/current/$ReleaseName-server-cloudimg-$SysArchName-wsl.rootfs.tar.gz", "$env:HOME\.mbw\.tarball\$ReleaseName-amd64.tar.gz")
+        (New-Object System.Net.WebClient).DownloadFile("http://cloud-images.ubuntu.com/$Release/current/$Release-server-cloudimg-$SysArchName-wsl.rootfs.tar.gz", "$env:HOME\.mbw\.tarball\$Release-amd64.tar.gz")
 
-        Write-Host "# Download completed for theWSL tarball for $ReleaseName($SysArchName). Time taken: $((Get-Date).Subtract($download_start_time).Seconds) second(s)" -ForegroundColor DarkYellow
+        Write-Host "# Download completed for theWSL tarball for $Release($SysArchName). Time taken: $((Get-Date).Subtract($download_start_time).Seconds) second(s)" -ForegroundColor DarkYellow
 
       }
 
@@ -99,18 +76,16 @@ function New-UbuntuWSLInstance {
         if ( $tmpname_exist -eq $true ) { $TmpName = -join ((65..90) + (97..122) | Get-Random -Count 10 | ForEach-Object {[char]$_}) }
       } until ($tmpname_exist -eq $false)
 
-      Add-Content "$env:HOME\.mbw\list.csv" "$TmpName,$ReleaseName,$Version"
+      Write-Host "# Creating Instance ubuntu-$TmpName (Using Ubuntu $Release and WSL$Version)...." -ForegroundColor DarkYellow
+      wsl.exe --import ubuntu-$TmpName "$env:HOME\.mbw\ubuntu-$TmpName" "$env:HOME\.mbw\.tarball\$Release-amd64.tar.gz" --version $Version
 
-      Write-Host "# Creating Instance ubuntu-$TmpName (Using Ubuntu $ReleaseName and WSL$Version)...." -ForegroundColor DarkYellow
-      wsl.exe --import ubuntu-$TmpName "$env:HOME\.mbw\ubuntu-$TmpName" "$env:HOME\.mbw\.tarball\$ReleaseName-amd64.tar.gz" --version $Version
-
-      if ( -not $IsNoUpdate ) {
+      if ( -not $NoUpdate ) {
         Write-Host "# Updating ubuntu-$TmpName...." -ForegroundColor DarkYellow
         wsl.exe -d ubuntu-$TmpName apt update
         wsl.exe -d ubuntu-$TmpName apt upgrade -y
       }
 
-      if ( -not $IsRoot ) {
+      if ( -not $RootOnly ) {
         Write-Host "# Creating user '$env:USERNAME' for ubuntu-$TmpName...." -ForegroundColor DarkYellow
         wsl.exe -d ubuntu-$TmpName /usr/sbin/useradd -m -s "/bin/bash" $env:USERNAME
         wsl.exe -d ubuntu-$TmpName passwd -q -d $env:USERNAME
@@ -141,10 +116,6 @@ function New-UbuntuWSLInstance {
       wsl.exe --unregister ubuntu-$Name
       Write-Host "# Cleanup..." -ForegroundColor DarkYellow
       Remove-Item "$env:HOME\.mbw\ubuntu-$Name" -Force -Recurse
-      import-csv "$env:HOME\.mbw\list.csv" | Where-Object name -NE "$Name" | export-csv "$env:HOME\.mbw\list.csv" -NoTypeInformation
-      if (-not ((Get-Content "$env:HOME\.mbw\list.csv" -Raw) -match '\S')) {
-        Remove-Item "$env:HOME\.mbw\list.csv"
-      }
 
       Write-Host "# Removed Instance ubuntu-$Name." -ForegroundColor DarkYellow
     }
