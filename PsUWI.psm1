@@ -128,26 +128,39 @@ function New-UbuntuWSLInstance {
   }
 
   function Remove-UbuntuWSLInstance {
+    <#
+    .SYNOPSIS
+        Remove a Ubuntu instance on WSL
+    .DESCRIPTION
+        Remove a Ubuntu instance on WSL
+    .PARAMETER Id
+        The id of the instance, after the name of distro "ubuntu-".
+    .EXAMPLE
+        Remove-UbuntuWSLInstance -Id AbcdEFGhiJ
+        # Remove a instance called ubuntu-AbcdEFGhiJ
+    .LINK
+        https://github.com/patrick330602/PsUWI
+    #>
     [cmdletbinding()]
     Param (
       [Parameter(Mandatory=$true)]
-      [string]$Name
+      [string]$Id
     )
     Process {
-      if ( -not ( Get-ChildItem "$env:HOME\.mbw" | Select-String "$Name" ) ) {
-        throw [System.IO.FileNotFoundException] "$Name not found."
+      if ( -not ( Get-ChildItem "$env:HOME\.mbw" | Select-String "$Id" ) ) {
+        throw [System.IO.FileNotFoundException] "$Id not found."
       }
 
-      Write-Host "# Removing Instance ubuntu-$Name..." -ForegroundColor DarkYellow
+      Write-Host "# Removing Instance ubuntu-$Id..." -ForegroundColor DarkYellow
 
-      Write-Host "# Terminating Instance ubuntu-$Name..." -ForegroundColor DarkYellow
-      wsl.exe -t ubuntu-$Name
-      Write-Host "# Unregistering Instance ubuntu-$Name..." -ForegroundColor DarkYellow
-      wsl.exe --unregister ubuntu-$Name
+      Write-Host "# Terminating Instance ubuntu-$Id..." -ForegroundColor DarkYellow
+      wsl.exe -t ubuntu-$Id
+      Write-Host "# Unregistering Instance ubuntu-$Id..." -ForegroundColor DarkYellow
+      wsl.exe --unregister ubuntu-$Id
       Write-Host "# Cleanup..." -ForegroundColor DarkYellow
-      Remove-Item "$env:HOME\.mbw\ubuntu-$Name" -Force -Recurse
+      Remove-Item "$env:HOME\.mbw\ubuntu-$Id" -Force -Recurse
 
-      Write-Host "# Removed Instance ubuntu-$Name." -ForegroundColor DarkYellow
+      Write-Host "# Removed Instance ubuntu-$Id." -ForegroundColor DarkYellow
     }
   }
 
@@ -155,7 +168,7 @@ function New-UbuntuWSLInstance {
     Write-Host "# Removing all instances..." -ForegroundColor DarkYellow
     $UbuntuDistroList = @(Get-ChildItem "$env:HOME\.mbw" -Filter ubuntu-*)
     Foreach ($i in $UbuntuDistroList) {
-      Remove-UbuntuWSLInstance -Name ($i.BaseName).split('-')[1]
+      Remove-UbuntuWSLInstance -Id ($i.BaseName).split('-')[1]
     }
     Write-Host "# Removed all instances." -ForegroundColor DarkYellow
   }
