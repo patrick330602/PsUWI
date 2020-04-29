@@ -165,6 +165,17 @@ function New-UbuntuWSLInstance {
   }
 
   function Remove-AllUbuntuWSLInstances {
+    <#
+    .SYNOPSIS
+        Remove all Ubuntu instances on WSL
+    .DESCRIPTION
+        Remove all Ubuntu instances on WSL
+    .EXAMPLE
+        Remove-AllUbuntuWSLInstances
+        # Remove all instances
+    .LINK
+        https://github.com/patrick330602/PsUWI
+    #>
     Write-Host "# Removing all instances..." -ForegroundColor DarkYellow
     $UbuntuDistroList = @(Get-ChildItem "$env:HOME\.mbw" -Filter ubuntu-*)
     Foreach ($i in $UbuntuDistroList) {
