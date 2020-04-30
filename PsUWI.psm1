@@ -1,15 +1,15 @@
 function New-UbuntuWSLInstance {
     <#
     .SYNOPSIS
-        Create an new Ubuntu instance on WSL
+        Create a new Ubuntu instance on WSL
     .DESCRIPTION
-        Create an new Ubuntu instance on WSL. Windows 10 2004 only for now.
+        Create a new Ubuntu instance on WSL. Windows 10 2004 only for now.
     .PARAMETER Release
-        The Ubuntu relase you want to use to create the instance. Default is focal.
+        The Ubuntu release you want to use to create the instance. Default is focal.
     .PARAMETER Version
         The WSL version you want to use. Default is 1.
     .PARAMETER Force
-        If specified, an new WSL tarball will always be downloaded even if it exists.
+        If specified, a new WSL tarball will always be downloaded even if it exists.
     .PARAMETER NoUpdate
         If specified, it will not update during the creation.
     .PARAMETER RootOnly
@@ -19,13 +19,13 @@ function New-UbuntuWSLInstance {
         # Create a Ubuntu Bionic instance on WSL1
     .EXAMPLE
         New-UbuntuWSLInstance -Release xenial -Version 2 -RootOnly
-        # Create a Ubuntu Xenial instance on WSL2 without creating a user account
+        # Create an Ubuntu Xenial instance on WSL2 without creating a user account
     .EXAMPLE
         New-UbuntuWSLInstance -Version 2 -NoUpdate
-        # Create a Ubuntu Focal instance on WSL2 witout any update
+        # Create an Ubuntu Focal instance on WSL2 without any update
     .EXAMPLE
         New-UbuntuWSLInstance -Release eoan -Force
-        # Create a Ubuntu Eoan instance on WSL1 and download the WSL tarball even it already exists
+        # Create an Ubuntu Eoan instance on WSL1 and download the WSL tarball even if it already exists
     .LINK
         https://github.com/patrick330602/PsUWI
     #>
@@ -37,18 +37,15 @@ function New-UbuntuWSLInstance {
       [ValidateSet('1','2')]
       [string]$Version = '1',
       [Parameter(Mandatory=$false)]
-      [Switch]
-      [boolean]$Force,
+      [switch]$Force,
       [Parameter(Mandatory=$false)]
-      [Switch]
-      [boolean]$NoUpdate,
+      [switch]$NoUpdate,
       [Parameter(Mandatory=$false)]
       [Alias("Root")]
-      [Switch]
-      [boolean]$RootOnly
+      [switch]$RootOnly
     )
     Process {
-      Write-Host "# Let the journey begin!" -ForegroundColor DarkYellow
+      Write-Host "# Let the journey begins!" -ForegroundColor DarkYellow
 
       $TmpName = -join ((65..90) + (97..122) | Get-Random -Count 10 | ForEach-Object {[char]$_})
 
@@ -57,7 +54,7 @@ function New-UbuntuWSLInstance {
         throw [System.NotSupportedException] "The architecture $SysArchName is not supported."
       }
       if ( ( $Release -eq "xenial" ) -and ( $SysArchName -eq "arm64" ) ) {
-        throw [System.NotSupportedException] "Ubuntu Xenial do not support architecture arm64."
+        throw [System.NotSupportedException] "Ubuntu Xenial does not support architecture arm64."
       }
       Write-Host "# Your system architecture is $SysArchName" -ForegroundColor DarkYellow
 
@@ -76,7 +73,7 @@ function New-UbuntuWSLInstance {
             $download_start_time = Get-Date
             (New-Object System.Net.WebClient).DownloadFile("http://cloud-images.ubuntu.com/$Release/current/$Release-server-cloudimg-$SysArchName-wsl.rootfs.tar.gz", "$env:HOME\.mbw\.tarball\$Release-amd64.tar.gz")
 
-            Write-Host "# Download completed for theWSL tarball for $Release($SysArchName). Time taken: $((Get-Date).Subtract($download_start_time).Seconds) second(s)" -ForegroundColor DarkYellow
+            Write-Host "# Download completed for the WSL tarball for $Release($SysArchName). Time taken: $((Get-Date).Subtract($download_start_time).Seconds) second(s)" -ForegroundColor DarkYellow
         } else {
             Write-Host "# WSL tarball for $Release ($SysArchName) found, skip downloading" -ForegroundColor DarkYellow
         }
@@ -87,7 +84,7 @@ function New-UbuntuWSLInstance {
         $download_start_time = Get-Date
         (New-Object System.Net.WebClient).DownloadFile("http://cloud-images.ubuntu.com/$Release/current/$Release-server-cloudimg-$SysArchName-wsl.rootfs.tar.gz", "$env:HOME\.mbw\.tarball\$Release-amd64.tar.gz")
 
-        Write-Host "# Download completed for theWSL tarball for $Release($SysArchName). Time taken: $((Get-Date).Subtract($download_start_time).Seconds) second(s)" -ForegroundColor DarkYellow
+        Write-Host "# Download completed for the WSL tarball for $Release($SysArchName). Time taken: $((Get-Date).Subtract($download_start_time).Seconds) second(s)" -ForegroundColor DarkYellow
 
       }
 
@@ -106,7 +103,7 @@ function New-UbuntuWSLInstance {
         if ( $tmpname_exist -eq $true ) { $TmpName = -join ((65..90) + (97..122) | Get-Random -Count 10 | ForEach-Object {[char]$_}) }
       } until ($tmpname_exist -eq $false)
 
-      Write-Host "# Creating Instance ubuntu-$TmpName (Using Ubuntu $Release and WSL$Version)...." -ForegroundColor DarkYellow
+      Write-Host "# Creating instance ubuntu-$TmpName (Using Ubuntu $Release and WSL$Version)...." -ForegroundColor DarkYellow
       wsl.exe --import ubuntu-$TmpName "$env:HOME\.mbw\ubuntu-$TmpName" "$env:HOME\.mbw\.tarball\$Release-amd64.tar.gz" --version $Version
 
       if ( -not $NoUpdate ) {
@@ -130,14 +127,14 @@ function New-UbuntuWSLInstance {
   function Remove-UbuntuWSLInstance {
     <#
     .SYNOPSIS
-        Remove a Ubuntu instance on WSL
+        Remove an Ubuntu instance on WSL
     .DESCRIPTION
-        Remove a Ubuntu instance on WSL
+        Remove an Ubuntu instance on WSL
     .PARAMETER Id
-        The id of the instance, after the name of distro "ubuntu-".
+        The ID of the instance, after the name of distro "ubuntu-".
     .EXAMPLE
         Remove-UbuntuWSLInstance -Id AbcdEFGhiJ
-        # Remove a instance called ubuntu-AbcdEFGhiJ
+        # Remove an instance called ubuntu-AbcdEFGhiJ
     .LINK
         https://github.com/patrick330602/PsUWI
     #>
@@ -151,16 +148,16 @@ function New-UbuntuWSLInstance {
         throw [System.IO.FileNotFoundException] "$Id not found."
       }
 
-      Write-Host "# Removing Instance ubuntu-$Id..." -ForegroundColor DarkYellow
+      Write-Host "# Removing instance ubuntu-$Id..." -ForegroundColor DarkYellow
 
-      Write-Host "# Terminating Instance ubuntu-$Id..." -ForegroundColor DarkYellow
+      Write-Host "# Terminating instance ubuntu-$Id..." -ForegroundColor DarkYellow
       wsl.exe -t ubuntu-$Id
-      Write-Host "# Unregistering Instance ubuntu-$Id..." -ForegroundColor DarkYellow
+      Write-Host "# Unregistering instance ubuntu-$Id..." -ForegroundColor DarkYellow
       wsl.exe --unregister ubuntu-$Id
       Write-Host "# Cleanup..." -ForegroundColor DarkYellow
       Remove-Item "$env:HOME\.mbw\ubuntu-$Id" -Force -Recurse
 
-      Write-Host "# Removed Instance ubuntu-$Id." -ForegroundColor DarkYellow
+      Write-Host "# Removed instance ubuntu-$Id." -ForegroundColor DarkYellow
     }
   }
 
