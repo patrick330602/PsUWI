@@ -4,5 +4,6 @@ param(
     $GalleryApiKey
 )
 
-$env:PSModulePath = $env:PSModulePath + [System.IO.Path]::PathSeparator + "$PSScriptRoot"
-Publish-Module -Name PSWsl -NuGetApiKey $GalleryApiKey
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+$env:PSModulePath = $env:PSModulePath + [System.IO.Path]::PathSeparator + "$(pwd)"
+Publish-Module -Name PsUWI -NuGetApiKey $GalleryApiKey
