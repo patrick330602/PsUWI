@@ -88,12 +88,6 @@ function New-UbuntuWSLInstance {
 
       }
 
-      if ( -not ( Test-Path -LiteralPath "$env:HOME\.mbw\list.csv" -PathType Leaf ) ) {
-        Add-Content "$env:HOME\.mbw\list.csv" "ID,Release,Version"
-      }
-
-      $inst_list = Import-Csv "$env:HOME\.mbw\list.csv"
-
       # get absolute unique TmpName
       Do {
         $tmpname_exist = $false
