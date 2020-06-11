@@ -14,6 +14,8 @@ function New-UbuntuWSLInstance {
         If specified, it will not update during the creation.
     .PARAMETER RootOnly
         If specified, no new user will be created.
+    .PARAMETER AdditionalPPA
+        The PPA you want to include by default. Separate each PPA by comma.
     .EXAMPLE
         New-UbuntuWSLInstance -Release bionic
         # Create a Ubuntu Bionic instance on WSL1
