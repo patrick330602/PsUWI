@@ -41,8 +41,9 @@ function New-UbuntuWSLInstance {
       [Parameter(Mandatory=$false)]
       [switch]$NoUpdate,
       [Parameter(Mandatory=$false)]
-      [Alias("Root")]
-      [switch]$RootOnly
+      [switch]$RootOnly,
+      [Parameter(Mandatory=$false)]
+      [string]$AdditionalPPA
     )
     Process {
       Write-Host "# Let the journey begins!" -ForegroundColor DarkYellow
@@ -111,6 +112,15 @@ function New-UbuntuWSLInstance {
         wsl.exe -d ubuntu-$TmpName /usr/sbin/useradd -m -s "/bin/bash" $env:USERNAME
         wsl.exe -d ubuntu-$TmpName passwd -q -d $env:USERNAME
         wsl.exe -d ubuntu-$TmpName /usr/sbin/usermod -aG adm,dialout,cdrom,floppy,sudo,audio,dip,video,plugdev,netdev $env:USERNAME
+      }
+
+      $ppa_array = $AdditionalPPA -split ","
+
+      foreach ($appa in $ppa_array) {
+        Write-Host "# Adding additional PPA '$appa'...." -ForegroundColor DarkYellow
+        wsl.exe -d ubuntu-$TmpName /usr/bin/apt-add-repository -y "ppa:$appa"
+        wsl.exe -d ubuntu-$TmpName apt update
+        wsl.exe -d ubuntu-$TmpName apt upgrade -y
       }
 
       Write-Host "# You are ready to rock!" -ForegroundColor DarkYellow
