@@ -132,7 +132,12 @@ function New-UbuntuWSLInstance {
     }
 
     Write-Host "# You are ready to rock!" -ForegroundColor DarkYellow
-    wsl.exe -d ubuntu-$TmpName -u $env:USERNAME
+    if ( -not $RootOnly ) {
+      wsl.exe -d ubuntu-$TmpName -u $env:USERNAME
+    }
+    else {
+      wsl.exe -d ubuntu-$TmpName -u root
+    }
   }
 }
 
