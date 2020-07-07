@@ -114,10 +114,10 @@ function New-UbuntuWSLInstance {
 
     if ( -not $RootOnly ) {
       Write-Host "# Creating user '$env:USERNAME' for ubuntu-$TmpName...." -ForegroundColor DarkYellow
-      wsl.exe -d ubuntu-$TmpName -- /usr/sbin/useradd -m -s "/bin/bash" $env:USERNAME
-      wsl.exe -d ubuntu-$TmpName -- passwd -q -d $env:USERNAME
-      wsl.exe -d ubuntu-$TmpName -- echo `"$env:USERNAME ALL=`(ALL`:ALL`) NOPASSWD: ALL`" `| tee -a /etc/sudoers.d/$env:USERNAME
-      wsl.exe -d ubuntu-$TmpName -- /usr/sbin/usermod -aG adm, dialout, cdrom, floppy, sudo, audio, dip, video, plugdev, netdev $env:USERNAME
+      wsl.exe -d ubuntu-$TmpName /usr/sbin/useradd -m -s "/bin/bash" $env:USERNAME
+      wsl.exe -d ubuntu-$TmpName passwd -q -d $env:USERNAME
+      wsl.exe -d ubuntu-$TmpName echo `"$env:USERNAME ALL=`(ALL`:ALL`) NOPASSWD: ALL`" `| tee -a /etc/sudoers.d/$env:USERNAME `>/dev/null
+      wsl.exe -d ubuntu-$TmpName /usr/sbin/usermod -a -G adm,dialout,cdrom,floppy,sudo,audio,dip,video,plugdev,netdev $env:USERNAME
     }
 
     if ($AdditionalPPA) {
