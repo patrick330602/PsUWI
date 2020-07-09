@@ -65,21 +65,26 @@ function New-UbuntuWSLInstance {
       throw [System.NotSupportedException] "Ubuntu Xenial does not support architecture arm64."
     }
     Write-Host "# Your system architecture is $SysArchName" -ForegroundColor DarkYellow
-
-    if ( -not (Test-Path -Path "$env:HOME\.mbw" -PathType Container ) ) {
-      mkdir -Path "$env:HOME\.mbw" | Out-Null
+    
+    $HomePath = $env:HOME
+    if (-not $HomePath) {
+      $HomePath = "$($env:HOMEDRIVE)$($env:HOMEPATH)"
     }
 
-    if ( -not (Test-Path -Path "$env:HOME\.mbw\.tarball" -PathType Container ) ) {
-      mkdir -Path "$env:HOME\.mbw\.tarball" | Out-Null
+    if ( -not (Test-Path -Path "$HomePath\.mbw" -PathType Container ) ) {
+      mkdir -Path "$HomePath\.mbw" | Out-Null
     }
 
-    if ( Test-Path -LiteralPath "$env:HOME\.mbw\.tarball\$Release-$SysArchName.tar.gz" -PathType Leaf ) {
+    if ( -not (Test-Path -Path "$HomePath\.mbw\.tarball" -PathType Container ) ) {
+      mkdir -Path "$HomePath\.mbw\.tarball" | Out-Null
+    }
+
+    if ( Test-Path -LiteralPath "$HomePath\.mbw\.tarball\$Release-$SysArchName.tar.gz" -PathType Leaf ) {
 
       if ( $Force ) {
         Write-Host "# WSL tarball for $Release($SysArchName) found but -Force passed. Redownloading..." -ForegroundColor DarkYellow
         $download_start_time = Get-Date
-        (New-Object System.Net.WebClient).DownloadFile("http://cloud-images.ubuntu.com/$Release/current/$Release-server-cloudimg-$SysArchName-wsl.rootfs.tar.gz", "$env:HOME\.mbw\.tarball\$Release-amd64.tar.gz")
+        (New-Object System.Net.WebClient).DownloadFile("http://cloud-images.ubuntu.com/$Release/current/$Release-server-cloudimg-$SysArchName-wsl.rootfs.tar.gz", "$HomePath\.mbw\.tarball\$Release-amd64.tar.gz")
 
         Write-Host "# Download completed for the WSL tarball for $Release($SysArchName). Time taken: $((Get-Date).Subtract($download_start_time).Seconds) second(s)" -ForegroundColor DarkYellow
       }
@@ -92,7 +97,7 @@ function New-UbuntuWSLInstance {
 
       Write-Host "# WSL tarball for $Release ($SysArchName) not found. Downloading..." -ForegroundColor DarkYellow
       $download_start_time = Get-Date
-      (New-Object System.Net.WebClient).DownloadFile("http://cloud-images.ubuntu.com/$Release/current/$Release-server-cloudimg-$SysArchName-wsl.rootfs.tar.gz", "$env:HOME\.mbw\.tarball\$Release-amd64.tar.gz")
+      (New-Object System.Net.WebClient).DownloadFile("http://cloud-images.ubuntu.com/$Release/current/$Release-server-cloudimg-$SysArchName-wsl.rootfs.tar.gz", "$HomePath\.mbw\.tarball\$Release-amd64.tar.gz")
 
       Write-Host "# Download completed for the WSL tarball for $Release($SysArchName). Time taken: $((Get-Date).Subtract($download_start_time).Seconds) second(s)" -ForegroundColor DarkYellow
 
@@ -108,7 +113,8 @@ function New-UbuntuWSLInstance {
     } until ($tmpname_exist -eq $false)
 
     Write-Host "# Creating instance ubuntu-$TmpName (Using Ubuntu $Release and WSL$Version)...." -ForegroundColor DarkYellow
-    wsl.exe --import ubuntu-$TmpName "$env:HOME\.mbw\ubuntu-$TmpName" "$env:HOME\.mbw\.tarball\$Release-amd64.tar.gz" --version $Version
+    wsl.exe --import ubuntu-$TmpName "$HomePath\.mbw\ubuntu-$TmpName" "$HomePath\.mbw\.tarball\$Release-amd64.tar.gz" --version $Version
+
     if ($EnableSource) {
       Write-Host "# Enabling Ubuntu source repository...." -ForegroundColor DarkYellow
       Write-Host "# -NoUpdate will be ignored if passed" -ForegroundColor DarkYellow
@@ -170,7 +176,12 @@ function Remove-UbuntuWSLInstance {
     [string]$Id
   )
   Process {
-    if ( -not ( Get-ChildItem "$env:HOME\.mbw" | Select-String "$Id" ) ) {
+    $HomePath = $env:HOME
+    if (-not $HomePath) {
+      $HomePath = "$($env:HOMEDRIVE)$($env:HOMEPATH)"
+    }
+
+    if ( -not ( Get-ChildItem "$HomePath\.mbw" | Select-String "$Id" ) ) {
       throw [System.IO.FileNotFoundException] "$Id not found."
     }
 
@@ -181,7 +192,7 @@ function Remove-UbuntuWSLInstance {
     Write-Host "# Unregistering instance ubuntu-$Id..." -ForegroundColor DarkYellow
     wsl.exe --unregister ubuntu-$Id
     Write-Host "# Cleanup..." -ForegroundColor DarkYellow
-    Remove-Item "$env:HOME\.mbw\ubuntu-$Id" -Force -Recurse
+    Remove-Item "$HomePath\.mbw\ubuntu-$Id" -Force -Recurse
 
     Write-Host "# Removed instance ubuntu-$Id." -ForegroundColor DarkYellow
   }
@@ -199,8 +210,13 @@ function Remove-AllUbuntuWSLInstances {
     .LINK
         https://github.com/patrick330602/PsUWI
     #>
+  $HomePath = $env:HOME
+  if (-not $HomePath) {
+    $HomePath = "$($env:HOMEDRIVE)$($env:HOMEPATH)"
+  }
+  
   Write-Host "# Removing all instances..." -ForegroundColor DarkYellow
-  $UbuntuDistroList = @(Get-ChildItem "$env:HOME\.mbw" -Filter ubuntu-*)
+  $UbuntuDistroList = @(Get-ChildItem "$HomePath\.mbw" -Filter ubuntu-*)
   Foreach ($i in $UbuntuDistroList) {
     Remove-UbuntuWSLInstance -Id ($i.BaseName).split('-')[1]
   }
