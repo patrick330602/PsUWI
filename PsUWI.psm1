@@ -12,6 +12,8 @@ function New-UbuntuWSLInstance {
         If specified, a new WSL tarball will always be downloaded even if it exists.
     .PARAMETER NoUpdate
         If specified, it will not update during the creation.
+    .PARAMETER NoUpgrade
+        If specified, it will only update but not upgrade during the creation.
     .PARAMETER RootOnly
         If specified, no new user will be created.
     .PARAMETER EnableSource
@@ -22,6 +24,8 @@ function New-UbuntuWSLInstance {
         If specified, Selective Proposed repostiory will be diabled.
     .PARAMETER AdditionalPPA
         The PPA you want to include by default. Separate each PPA by comma.
+    .PARAMETER AptOutput
+        If specified, apt output will be shown.
     .EXAMPLE
         New-UbuntuWSLInstance -Release bionic
         # Create a Ubuntu Bionic instance on WSL1
@@ -50,6 +54,8 @@ function New-UbuntuWSLInstance {
     [Parameter(Mandatory = $false)]
     [switch]$NoUpdate,
     [Parameter(Mandatory = $false)]
+    [switch]$NoUpgrade,
+    [Parameter(Mandatory = $false)]
     [switch]$RootOnly,
     [Parameter(Mandatory = $false)]
     [string]$AdditionalPPA,
@@ -58,10 +64,16 @@ function New-UbuntuWSLInstance {
     [Parameter(Mandatory = $false)]
     [switch]$EnableProposed,
     [Parameter(Mandatory = $false)]
-    [switch]$DisableSelective
+    [switch]$DisableSelective,
+    [Parameter(Mandatory = $false)]
+    [switch]$AptOutput
   )
   Process {
     Write-Host "# Let the journey begins!" -ForegroundColor DarkYellow
+    $quiet_param = "-q"
+    if ($AptOutput) {
+      $quiet_param = ""
+    }
 
     $TmpName = -join ((65..90) + (97..122) | Get-Random -Count 10 | ForEach-Object { [char]$_ })
 
@@ -143,8 +155,10 @@ function New-UbuntuWSLInstance {
 
     if ( -not $NoUpdate -or ($EnableSource -or $EnableProposed) ) {
       Write-Host "# Updating ubuntu-$TmpName...." -ForegroundColor DarkYellow
-      wsl.exe -d ubuntu-$TmpName apt update
-      wsl.exe -d ubuntu-$TmpName apt upgrade -y
+      wsl.exe -d ubuntu-$TmpName apt-get update $quiet_param
+      if (-not $NoUpgrade){
+        wsl.exe -d ubuntu-$TmpName apt-get upgrade -y $quiet_param
+      }
     }
 
     if ( -not $RootOnly ) {
@@ -161,8 +175,8 @@ function New-UbuntuWSLInstance {
       foreach ($appa in $ppa_array) {
         Write-Host "# Adding additional PPA '$appa'...." -ForegroundColor DarkYellow
         wsl.exe -d ubuntu-$TmpName /usr/bin/apt-add-repository -y "ppa:$appa"
-        wsl.exe -d ubuntu-$TmpName apt update
-        wsl.exe -d ubuntu-$TmpName apt upgrade -y
+        wsl.exe -d ubuntu-$TmpName apt-get update $quiet_param
+        wsl.exe -d ubuntu-$TmpName apt-get upgrade -y $quiet_param
       }
     }
 
