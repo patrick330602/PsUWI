@@ -14,6 +14,8 @@ function New-UbuntuWSLInstance {
         If specified, it will not update during the creation.
     .PARAMETER RootOnly
         If specified, no new user will be created.
+    .PARAMETER EnableSource
+        If specified, all source repositories in `/etc/apt/sources.list` will be enabled.
     .PARAMETER AdditionalPPA
         The PPA you want to include by default. Separate each PPA by comma.
     .EXAMPLE
@@ -46,7 +48,9 @@ function New-UbuntuWSLInstance {
     [Parameter(Mandatory = $false)]
     [switch]$RootOnly,
     [Parameter(Mandatory = $false)]
-    [string]$AdditionalPPA
+    [string]$AdditionalPPA,
+    [Parameter(Mandatory = $false)]
+    [switch]$EnableSource
   )
   Process {
     Write-Host "# Let the journey begins!" -ForegroundColor DarkYellow
@@ -105,8 +109,13 @@ function New-UbuntuWSLInstance {
 
     Write-Host "# Creating instance ubuntu-$TmpName (Using Ubuntu $Release and WSL$Version)...." -ForegroundColor DarkYellow
     wsl.exe --import ubuntu-$TmpName "$env:HOME\.mbw\ubuntu-$TmpName" "$env:HOME\.mbw\.tarball\$Release-amd64.tar.gz" --version $Version
+    if ($EnableSource) {
+      Write-Host "# Enabling Ubuntu source repository...." -ForegroundColor DarkYellow
+      Write-Host "# -NoUpdate will be ignored if passed" -ForegroundColor DarkYellow
+      wsl.exe -d ubuntu-$TmpName sed -i `"s`|`# deb-src`|deb-src`|g`" /etc/apt/sources.list
+    }
 
-    if ( -not $NoUpdate ) {
+    if ( -not $NoUpdate -or ($EnableSource) ) {
       Write-Host "# Updating ubuntu-$TmpName...." -ForegroundColor DarkYellow
       wsl.exe -d ubuntu-$TmpName apt update
       wsl.exe -d ubuntu-$TmpName apt upgrade -y
