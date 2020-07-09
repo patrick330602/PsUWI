@@ -16,6 +16,10 @@ function New-UbuntuWSLInstance {
         If specified, no new user will be created.
     .PARAMETER EnableSource
         If specified, all source repositories in `/etc/apt/sources.list` will be enabled.
+    .PARAMETER EnableProposed
+        If specified, Ubuntu Proposed repository will be enabled. By default selective is enabled.
+    .PARAMETER DisableSelective
+        If specified, Selective Proposed repostiory will be diabled.
     .PARAMETER AdditionalPPA
         The PPA you want to include by default. Separate each PPA by comma.
     .EXAMPLE
@@ -50,7 +54,11 @@ function New-UbuntuWSLInstance {
     [Parameter(Mandatory = $false)]
     [string]$AdditionalPPA,
     [Parameter(Mandatory = $false)]
-    [switch]$EnableSource
+    [switch]$EnableSource,
+    [Parameter(Mandatory = $false)]
+    [switch]$EnableProposed,
+    [Parameter(Mandatory = $false)]
+    [switch]$DisableSelective
   )
   Process {
     Write-Host "# Let the journey begins!" -ForegroundColor DarkYellow
@@ -121,7 +129,19 @@ function New-UbuntuWSLInstance {
       wsl.exe -d ubuntu-$TmpName sed -i `"s`|`# deb-src`|deb-src`|g`" /etc/apt/sources.list
     }
 
-    if ( -not $NoUpdate -or ($EnableSource) ) {
+    if ($EnableProposed) {
+      Write-Host "# Enabling Ubuntu Proposed repository...." -ForegroundColor DarkYellow
+      Write-Host "# -NoUpdate will be ignored if passed" -ForegroundColor DarkYellow
+      wsl.exe -d ubuntu-$TmpName echo -e `"`# Enable Ubuntu proposed archive\ndeb http`://archive.ubuntu.com/ubuntu/ `$`(lsb_release `-cs`)-proposed restricted main multiverse universe`" `> /etc/apt/sources.list.d/ubuntu-`$`(lsb_release `-cs`)-proposed.list
+      if ( $SysArchName -eq "arm64" ) {
+        wsl.exe -d ubuntu-$TmpName echo -e `"`# Enable Ubuntu proposed archive\ndeb http`://ports.ubuntu.com/ubuntu-ports `$`(lsb_release `-cs`)-proposed restricted main multiverse universe`" `> /etc/apt/sources.list.d/ubuntu-`$`(lsb_release `-cs`)-proposed.list
+      }
+      if (-not $DisableSelective) {
+        wsl.exe -d ubuntu-$TmpName echo -e `"`# Configure apt to allow selective installs of packages `from proposed\nPackage: `*\nPin`: release a`=`$`(lsb_release `-cs`)-proposed\nPin-Priority`: 400`" `>`> /etc/apt/preferences.d/proposed-updates
+      }
+    }
+
+    if ( -not $NoUpdate -or ($EnableSource -or $EnableProposed) ) {
       Write-Host "# Updating ubuntu-$TmpName...." -ForegroundColor DarkYellow
       wsl.exe -d ubuntu-$TmpName apt update
       wsl.exe -d ubuntu-$TmpName apt upgrade -y
