@@ -70,7 +70,7 @@ function New-UbuntuWSLInstance {
   )
   Process {
     Write-Host "# Let the journey begins!" -ForegroundColor DarkYellow
-    $quiet_param = "-q"
+    $quiet_param = "-qq"
     if ($AptOutput) {
       $quiet_param = ""
     }
