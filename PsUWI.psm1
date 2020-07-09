@@ -18,6 +18,8 @@ function New-UbuntuWSLInstance {
         If specified, all source repositories in `/etc/apt/sources.list` will be enabled.
     .PARAMETER AdditionalPPA
         The PPA you want to include by default. Separate each PPA by comma.
+    .PARAMETER OverWrite
+        Whether you want to overwrite your existing Ubuntu installed from store. Use 'latest' to overwrite Ubuntu UWP, use 'lts' to overwrite the corresponding Ubuntu LTS UWP. If not found, 
     .EXAMPLE
         New-UbuntuWSLInstance -Release bionic
         # Create a Ubuntu Bionic instance on WSL1
@@ -123,8 +125,8 @@ function New-UbuntuWSLInstance {
 
     if ( -not $NoUpdate -or ($EnableSource) ) {
       Write-Host "# Updating ubuntu-$TmpName...." -ForegroundColor DarkYellow
-      wsl.exe -d ubuntu-$TmpName apt update
-      wsl.exe -d ubuntu-$TmpName apt upgrade -y
+      wsl.exe -d ubuntu-$TmpName apt update -q
+      wsl.exe -d ubuntu-$TmpName apt upgrade -yq
     }
 
     if ( -not $RootOnly ) {
