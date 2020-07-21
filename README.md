@@ -1,6 +1,6 @@
 # PsUbuntuWSLInstance
 
-![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/PsUWI)
+![PowerShell Gallery Version](https://img.shields.io/powershellgallery/v/PsUWI) ![PowerShell Gallery](https://img.shields.io/powershellgallery/dt/PsUWI)
 
 This is A PowerShell helper to create testing Ubuntu instances on WSL.
 
