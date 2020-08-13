@@ -204,9 +204,9 @@ function New-UbuntuWSLInstance {
 
       foreach ($appa in $ppa_array) {
         Write-IfNotSilent "Adding additional PPA '$appa'...." 
-        wsl.exe -d ubuntu-$TmpName /usr/bin/apt-add-repository -y "ppa:$appa"
-        wsl.exe -d ubuntu-$TmpName apt-get update $quiet_param
-        wsl.exe -d ubuntu-$TmpName apt-get upgrade -y $quiet_param
+        (wsl.exe -d ubuntu-$TmpName /usr/bin/apt-add-repository -y "ppa:$appa") | Write-Host
+        (wsl.exe -d ubuntu-$TmpName apt-get update $quiet_param) | Write-Host
+        (wsl.exe -d ubuntu-$TmpName apt-get upgrade -y $quiet_param) | Write-Host
       }
     }
 
