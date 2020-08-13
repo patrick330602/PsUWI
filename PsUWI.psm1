@@ -28,6 +28,8 @@ function New-UbuntuWSLInstance {
         If specified, apt output will be shown.
     .PARAMETER Silent
         If specified, all ouput will not be printed out. AptOutput will be ignored when using this
+    .PARAMETER NonInteractive
+        If specified, it will return the name of the created distro instead of going into the interactive prompt
     .EXAMPLE
         New-UbuntuWSLInstance -Release bionic
         # Create a Ubuntu Bionic instance on WSL1
@@ -45,7 +47,6 @@ function New-UbuntuWSLInstance {
     #>
   [cmdletbinding()]
   Param (
-
     [Parameter(Mandatory = $false)]
     [string]$Release = 'focal',
     [Parameter(Mandatory = $false)]
@@ -68,15 +69,16 @@ function New-UbuntuWSLInstance {
     [Parameter(Mandatory = $false)]
     [switch]$DisableSelective,
     [Parameter(Mandatory = $false)]
-    [switch]$AptOutput
+    [switch]$AptOutput,
+    [Parameter(Mandatory = $false)]
+    [switch]$Silent,
+    [Parameter(Mandatory = $false)]
+    [switch]$NonInteractive
   )
   Process {
-    Write-Host "# Let the journey begins!" -ForegroundColor DarkYellow
-    $quiet_param = "-qq"
-    if ($AptOutput) {
-      $quiet_param = ""
+    if ($NonInteractive) {
+      $Silent = $true
     }
-
     function Write-IfNotSilent {
       [cmdletbinding()]
       Param (
@@ -176,14 +178,15 @@ function New-UbuntuWSLInstance {
     }
 
     if ( -not $NoUpdate -or ($EnableSource -or $EnableProposed) ) {
-      wsl.exe -d ubuntu-$TmpName apt-get update $quiet_param
+      $quiet_param = Stop-Honking
       Write-IfNotSilent "Updating ubuntu-$TmpName...." 
+      (wsl.exe -d ubuntu-$TmpName apt-get update $quiet_param) | Write-Host
       if (-not $NoUpgrade){
-        wsl.exe -d ubuntu-$TmpName apt-get upgrade -y $quiet_param
+        (wsl.exe -d ubuntu-$TmpName apt-get upgrade -y $quiet_param) | Write-Host
       }
     }
 
-    if ( -not $RootOnly ) {
+    if ((-not $RootOnly) -or (-not $NonInteractive)) {
       Write-IfNotSilent "Creating user '$env:USERNAME' for ubuntu-$TmpName...." 
       wsl.exe -d ubuntu-$TmpName /usr/sbin/useradd -m -s "/bin/bash" $env:USERNAME
       wsl.exe -d ubuntu-$TmpName passwd -q -d $env:USERNAME
@@ -202,9 +205,13 @@ function New-UbuntuWSLInstance {
       }
     }
 
-    if ( -not $RootOnly ) {
     Write-IfNotSilent "You are ready to rock!"
+    if ($NonInteractive) {
+      return "ubuntu-$TmpName"
+    }
+    elseif ( -not $RootOnly ) {
       wsl.exe -d ubuntu-$TmpName -u $env:USERNAME
+
     }
     else {
       wsl.exe -d ubuntu-$TmpName -u root
