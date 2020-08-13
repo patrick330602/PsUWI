@@ -30,6 +30,8 @@ function New-UbuntuWSLInstance {
         If specified, all ouput will not be printed out. AptOutput will be ignored when using this
     .PARAMETER NonInteractive
         If specified, it will return the name of the created distro instead of going into the interactive prompt
+    .PARAMETER AdditionalPkg
+        The packages you want to include by default. Separate each package by comma.
     .EXAMPLE
         New-UbuntuWSLInstance -Release bionic
         # Create a Ubuntu Bionic instance on WSL1
@@ -73,7 +75,9 @@ function New-UbuntuWSLInstance {
     [Parameter(Mandatory = $false)]
     [switch]$Silent,
     [Parameter(Mandatory = $false)]
-    [switch]$NonInteractive
+    [switch]$NonInteractive,
+    [Parameter(Mandatory = $false)]
+    [string]$AdditionalPkg
   )
   Process {
     if ($NonInteractive) {
@@ -177,8 +181,9 @@ function New-UbuntuWSLInstance {
       }
     }
 
+    $quiet_param = Stop-Honking
+
     if ( -not $NoUpdate -or ($EnableSource -or $EnableProposed) ) {
-      $quiet_param = Stop-Honking
       Write-IfNotSilent "Updating ubuntu-$TmpName...." 
       (wsl.exe -d ubuntu-$TmpName apt-get update $quiet_param) | Write-Host
       if (-not $NoUpgrade){
@@ -202,6 +207,14 @@ function New-UbuntuWSLInstance {
         wsl.exe -d ubuntu-$TmpName /usr/bin/apt-add-repository -y "ppa:$appa"
         wsl.exe -d ubuntu-$TmpName apt-get update $quiet_param
         wsl.exe -d ubuntu-$TmpName apt-get upgrade -y $quiet_param
+      }
+    }
+
+    if ($AdditionalPkg) {
+      $pkg_array = $AdditionalPkg -split ","
+      foreach ($apkg in $pkg_array) {
+        Write-IfNotSilent "Adding package '$appa'...." 
+        (wsl.exe -d ubuntu-$TmpName apt-get install $quiet_param -y $apkg) | Write-Host
       }
     }
 
