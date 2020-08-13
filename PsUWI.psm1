@@ -207,7 +207,7 @@ function New-UbuntuWSLInstance {
 
     Write-IfNotSilent "You are ready to rock!"
     if ($NonInteractive) {
-      return "ubuntu-$TmpName"
+      return "$TmpName"
     }
     elseif ( -not $RootOnly ) {
       wsl.exe -d ubuntu-$TmpName -u $env:USERNAME
