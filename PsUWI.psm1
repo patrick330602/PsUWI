@@ -26,6 +26,8 @@ function New-UbuntuWSLInstance {
         The PPA you want to include by default. Separate each PPA by comma.
     .PARAMETER AptOutput
         If specified, apt output will be shown.
+    .PARAMETER Silent
+        If specified, all ouput will not be printed out. AptOutput will be ignored when using this
     .EXAMPLE
         New-UbuntuWSLInstance -Release bionic
         # Create a Ubuntu Bionic instance on WSL1
@@ -75,6 +77,26 @@ function New-UbuntuWSLInstance {
       $quiet_param = ""
     }
 
+    function Write-IfNotSilent {
+      [cmdletbinding()]
+      Param (
+        [Parameter(Mandatory = $true)]
+        [string]$Text
+      )
+      if (-not $Silent) {
+        Write-Host "# $Text" -ForegroundColor DarkYellow
+      }
+    }
+    function Stop-Honking {
+      if ($AptOutput -and (-not $Silent)) {
+        return ""
+      }
+      else {
+        return "-qq"
+      }
+    }
+    
+    Write-IfNotSilent "Let the journey begins!" 
     $TmpName = -join ((65..90) + (97..122) | Get-Random -Count 10 | ForEach-Object { [char]$_ })
 
     $SysArchName = ($env:PROCESSOR_ARCHITECTURE).ToLower()
@@ -84,7 +106,7 @@ function New-UbuntuWSLInstance {
     if ( ( $Release -eq "xenial" ) -and ( $SysArchName -eq "arm64" ) ) {
       throw [System.NotSupportedException] "Ubuntu Xenial does not support architecture arm64."
     }
-    Write-Host "# Your system architecture is $SysArchName" -ForegroundColor DarkYellow
+    Write-IfNotSilent "Your system architecture is $SysArchName" 
     
     $HomePath = $env:HOME
     if (-not $HomePath) {
@@ -102,24 +124,24 @@ function New-UbuntuWSLInstance {
     if ( Test-Path -LiteralPath "$HomePath\.mbw\.tarball\$Release-$SysArchName.tar.gz" -PathType Leaf ) {
 
       if ( $Force ) {
-        Write-Host "# WSL tarball for $Release($SysArchName) found but -Force passed. Redownloading..." -ForegroundColor DarkYellow
+        Write-IfNotSilent "WSL tarball for $Release($SysArchName) found but -Force passed. Redownloading..." 
         $download_start_time = Get-Date
         (New-Object System.Net.WebClient).DownloadFile("http://cloud-images.ubuntu.com/$Release/current/$Release-server-cloudimg-$SysArchName-wsl.rootfs.tar.gz", "$HomePath\.mbw\.tarball\$Release-amd64.tar.gz")
 
-        Write-Host "# Download completed for the WSL tarball for $Release($SysArchName). Time taken: $((Get-Date).Subtract($download_start_time).Seconds) second(s)" -ForegroundColor DarkYellow
+        Write-IfNotSilent "Download completed for the WSL tarball for $Release($SysArchName). Time taken: $((Get-Date).Subtract($download_start_time).Seconds) second(s)" 
       }
       else {
-        Write-Host "# WSL tarball for $Release ($SysArchName) found, skip downloading" -ForegroundColor DarkYellow
+        Write-IfNotSilent "WSL tarball for $Release ($SysArchName) found, skip downloading" 
       }
 
     }
     else {
 
-      Write-Host "# WSL tarball for $Release ($SysArchName) not found. Downloading..." -ForegroundColor DarkYellow
+      Write-IfNotSilent "WSL tarball for $Release ($SysArchName) not found. Downloading..." 
       $download_start_time = Get-Date
       (New-Object System.Net.WebClient).DownloadFile("http://cloud-images.ubuntu.com/$Release/current/$Release-server-cloudimg-$SysArchName-wsl.rootfs.tar.gz", "$HomePath\.mbw\.tarball\$Release-amd64.tar.gz")
 
-      Write-Host "# Download completed for the WSL tarball for $Release($SysArchName). Time taken: $((Get-Date).Subtract($download_start_time).Seconds) second(s)" -ForegroundColor DarkYellow
+      Write-IfNotSilent "Download completed for the WSL tarball for $Release($SysArchName). Time taken: $((Get-Date).Subtract($download_start_time).Seconds) second(s)" 
 
     }
 
@@ -132,18 +154,18 @@ function New-UbuntuWSLInstance {
       if ( $tmpname_exist -eq $true ) { $TmpName = -join ((65..90) + (97..122) | Get-Random -Count 10 | ForEach-Object { [char]$_ }) }
     } until ($tmpname_exist -eq $false)
 
-    Write-Host "# Creating instance ubuntu-$TmpName (Using Ubuntu $Release and WSL$Version)...." -ForegroundColor DarkYellow
+    Write-IfNotSilent "Creating instance ubuntu-$TmpName (Using Ubuntu $Release and WSL$Version)...." 
     wsl.exe --import ubuntu-$TmpName "$HomePath\.mbw\ubuntu-$TmpName" "$HomePath\.mbw\.tarball\$Release-amd64.tar.gz" --version $Version
 
     if ($EnableSource) {
-      Write-Host "# Enabling Ubuntu source repository...." -ForegroundColor DarkYellow
-      Write-Host "# -NoUpdate will be ignored if passed" -ForegroundColor DarkYellow
+      Write-IfNotSilent "Enabling Ubuntu source repository...." 
+      Write-IfNotSilent "-NoUpdate will be ignored if passed" 
       wsl.exe -d ubuntu-$TmpName sed -i `"s`|`# deb-src`|deb-src`|g`" /etc/apt/sources.list
     }
 
     if ($EnableProposed) {
-      Write-Host "# Enabling Ubuntu Proposed repository...." -ForegroundColor DarkYellow
-      Write-Host "# -NoUpdate will be ignored if passed" -ForegroundColor DarkYellow
+      Write-IfNotSilent "Enabling Ubuntu Proposed repository...." 
+      Write-IfNotSilent "-NoUpdate will be ignored if passed" 
       wsl.exe -d ubuntu-$TmpName echo -e `"`# Enable Ubuntu proposed archive\ndeb http`://archive.ubuntu.com/ubuntu/ `$`(lsb_release `-cs`)-proposed restricted main multiverse universe`" `> /etc/apt/sources.list.d/ubuntu-`$`(lsb_release `-cs`)-proposed.list
       if ( $SysArchName -eq "arm64" ) {
         wsl.exe -d ubuntu-$TmpName echo -e `"`# Enable Ubuntu proposed archive\ndeb http`://ports.ubuntu.com/ubuntu-ports `$`(lsb_release `-cs`)-proposed restricted main multiverse universe`" `> /etc/apt/sources.list.d/ubuntu-`$`(lsb_release `-cs`)-proposed.list
@@ -154,15 +176,15 @@ function New-UbuntuWSLInstance {
     }
 
     if ( -not $NoUpdate -or ($EnableSource -or $EnableProposed) ) {
-      Write-Host "# Updating ubuntu-$TmpName...." -ForegroundColor DarkYellow
       wsl.exe -d ubuntu-$TmpName apt-get update $quiet_param
+      Write-IfNotSilent "Updating ubuntu-$TmpName...." 
       if (-not $NoUpgrade){
         wsl.exe -d ubuntu-$TmpName apt-get upgrade -y $quiet_param
       }
     }
 
     if ( -not $RootOnly ) {
-      Write-Host "# Creating user '$env:USERNAME' for ubuntu-$TmpName...." -ForegroundColor DarkYellow
+      Write-IfNotSilent "Creating user '$env:USERNAME' for ubuntu-$TmpName...." 
       wsl.exe -d ubuntu-$TmpName /usr/sbin/useradd -m -s "/bin/bash" $env:USERNAME
       wsl.exe -d ubuntu-$TmpName passwd -q -d $env:USERNAME
       wsl.exe -d ubuntu-$TmpName echo `"$env:USERNAME ALL=`(ALL`:ALL`) NOPASSWD: ALL`" `| tee -a /etc/sudoers.d/$env:USERNAME `>/dev/null
@@ -173,15 +195,15 @@ function New-UbuntuWSLInstance {
       $ppa_array = $AdditionalPPA -split ","
 
       foreach ($appa in $ppa_array) {
-        Write-Host "# Adding additional PPA '$appa'...." -ForegroundColor DarkYellow
+        Write-IfNotSilent "Adding additional PPA '$appa'...." 
         wsl.exe -d ubuntu-$TmpName /usr/bin/apt-add-repository -y "ppa:$appa"
         wsl.exe -d ubuntu-$TmpName apt-get update $quiet_param
         wsl.exe -d ubuntu-$TmpName apt-get upgrade -y $quiet_param
       }
     }
 
-    Write-Host "# You are ready to rock!" -ForegroundColor DarkYellow
     if ( -not $RootOnly ) {
+    Write-IfNotSilent "You are ready to rock!"
       wsl.exe -d ubuntu-$TmpName -u $env:USERNAME
     }
     else {
