@@ -21,7 +21,7 @@ function New-UbuntuWSLInstance {
     .PARAMETER EnableProposed
         If specified, Ubuntu Proposed repository will be enabled. By default selective is enabled.
     .PARAMETER DisableSelective
-        If specified, Selective Proposed repostiory will be diabled.
+        If specified, Selective Proposed repostiory will be disabled.
     .PARAMETER AdditionalPPA
         The PPA you want to include by default. Separate each PPA by comma.
     .PARAMETER AptOutput
