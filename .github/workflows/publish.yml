@@ -12,4 +12,4 @@ jobs:
         env:
           NUGET_KEY: ${{ secrets.NUGET_KEY }}
         run: |
-        ./publish.ps1 -GalleryApiKey $env:NUGET_KEY
+          ./publish.ps1 -GalleryApiKey $env:NUGET_KEY
