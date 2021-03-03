@@ -158,8 +158,12 @@ function New-UbuntuWSLInstance {
     } until ($tmpname_exist -eq $false)
 
     Write-IfNotSilent "Creating instance ubuntu-$TmpName (Using Ubuntu $Release and WSL$Version)...." 
-    wsl.exe --import ubuntu-$TmpName "$HomePath\.mbw\ubuntu-$TmpName" "$HomePath\.mbw\.tarball\$Release-amd64.tar.gz" --version $Version
+    wsl.exe --import ubuntu-$TmpName "$HomePath\.mbw\ubuntu-$TmpName" "$HomePath\.mbw\.tarball\$Release-amd64.tar.gz"
 
+    if (-not (wsl.exe --set-version ubuntu-$TmpName $Version)){
+      Write-IfNotSilent "You are using a system that do not support WSL2, keep in WSL1"
+    }
+    
     if ($EnableSource) {
       Write-IfNotSilent "Enabling Ubuntu source repository...." 
       Write-IfNotSilent "-NoUpdate will be ignored if passed" 
