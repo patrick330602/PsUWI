@@ -129,7 +129,7 @@ function New-UbuntuWSLInstance {
       if ( $Force ) {
         Write-IfNotSilent "WSL tarball for $Release($SysArchName) found but -Force passed. Redownloading..." 
         $download_start_time = Get-Date
-        (New-Object System.Net.WebClient).DownloadFile("http://cloud-images.ubuntu.com/$Release/current/$Release-server-cloudimg-$SysArchName-wsl.rootfs.tar.gz", "$HomePath\.mbw\.tarball\$Release-amd64.tar.gz")
+        Invoke-WebRequest -Uri "http://cloud-images.ubuntu.com/$Release/current/$Release-server-cloudimg-$SysArchName-wsl.rootfs.tar.gz" -OutFile "$HomePath\.mbw\.tarball\$Release-$SysArchName.tar.gz"
 
         Write-IfNotSilent "Download completed for the WSL tarball for $Release($SysArchName). Time taken: $((Get-Date).Subtract($download_start_time).Seconds) second(s)" 
       }
@@ -142,7 +142,7 @@ function New-UbuntuWSLInstance {
 
       Write-IfNotSilent "WSL tarball for $Release ($SysArchName) not found. Downloading..." 
       $download_start_time = Get-Date
-      (New-Object System.Net.WebClient).DownloadFile("http://cloud-images.ubuntu.com/$Release/current/$Release-server-cloudimg-$SysArchName-wsl.rootfs.tar.gz", "$HomePath\.mbw\.tarball\$Release-amd64.tar.gz")
+      Invoke-WebRequest -Uri "http://cloud-images.ubuntu.com/$Release/current/$Release-server-cloudimg-$SysArchName-wsl.rootfs.tar.gz" -OutFile "$HomePath\.mbw\.tarball\$Release-$SysArchName.tar.gz"
 
       Write-IfNotSilent "Download completed for the WSL tarball for $Release($SysArchName). Time taken: $((Get-Date).Subtract($download_start_time).Seconds) second(s)" 
 
