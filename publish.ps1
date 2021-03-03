@@ -5,5 +5,5 @@ param(
 )
 
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-$env:PSModulePath = $env:PSModulePath + [System.IO.Path]::PathSeparator + "$(pwd)"
+$env:PSModulePath = $env:PSModulePath + [System.IO.Path]::PathSeparator + "$(Get-Location)"
 Publish-Module -Name PsUWI -NuGetApiKey $GalleryApiKey

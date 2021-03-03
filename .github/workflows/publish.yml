@@ -1,0 +1,15 @@
+name: Deployment
+on:
+  release:
+    types: [created]
+jobs:
+  deploy:
+    name: Deployment
+    runs-on: windows-2019
+    steps:
+      - uses: actions/checkout@v2
+      - name: Push
+        env:
+          NUGET_KEY: ${{ secrets.NUGET_KEY }}
+        run: |
+        ./publish.ps1 -GalleryApiKey $env:NUGET_KEY
