@@ -270,6 +270,7 @@ function Remove-UbuntuWSLInstance {
     wsl.exe --unregister ubuntu-$Id
     Write-Host "# Cleanup..." -ForegroundColor DarkYellow
     Remove-Item "$HomePath\.mbw\ubuntu-$Id" -Force -Recurse
+    Remove-Item "$Env:AppData\Microsoft\Windows\Start Menu\Programs\ubuntu-$Id" -Force -Recurse
 
     Write-Host "# Removed instance ubuntu-$Id." -ForegroundColor DarkYellow
   }
