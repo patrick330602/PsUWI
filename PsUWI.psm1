@@ -218,17 +218,16 @@ function New-UbuntuWSLInstance {
         wsl.exe -d ubuntu-$TmpName apt-get install $quiet_param -y $apkg | Out-Host
       }
     }
-
+    if ( -not $RootOnly ) {
+      $tmp_dis_name = (Get-ChildItem HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Lxss\ | Get-ItemProperty | Where {$_.'DistributionName' -eq "ubuntu-$TmpName"})[0].PSChildName
+      Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Lxss\$tmp_dis_name" -Name DefaultUid -Value 1000 -Force
+    }
     Write-IfNotSilent "You are ready to rock!"
     if ($NonInteractive) {
       return "$TmpName"
     }
-    elseif ( -not $RootOnly ) {
-      wsl.exe -d ubuntu-$TmpName -u $env:USERNAME
-
-    }
     else {
-      wsl.exe -d ubuntu-$TmpName -u root
+      wsl.exe -d ubuntu-$TmpName
     }
   }
 }
