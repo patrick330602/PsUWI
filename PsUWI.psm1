@@ -219,7 +219,7 @@ function New-UbuntuWSLInstance {
       }
     }
     if ( -not $RootOnly ) {
-      $tmp_dis_name = (Get-ChildItem HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Lxss\ | Get-ItemProperty | Where {$_.'DistributionName' -eq "ubuntu-$TmpName"})[0].PSChildName
+      $tmp_dis_name = (Get-ChildItem HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Lxss\ | Get-ItemProperty | Where-Object {$_.'DistributionName' -eq "ubuntu-$TmpName"})[0].PSChildName
       Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Lxss\$tmp_dis_name" -Name DefaultUid -Value 1000 -Force
     }
     Write-IfNotSilent "You are ready to rock!"
@@ -230,6 +230,11 @@ function New-UbuntuWSLInstance {
       wsl.exe -d ubuntu-$TmpName
     }
   }
+}
+
+function New-NonInteractiveUbuntuInstance {
+  $output = New-UbuntuWSLInstance -NonInteractive $args
+  return $output[-1]
 }
 
 function Remove-UbuntuWSLInstance {
